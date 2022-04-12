@@ -25,7 +25,8 @@ set(CMAKE_Fortran_FLAGS "-std=f2008 -O3 -g -pedantic -Wall -Wno-surprising -Wno-
 
 add_library(
 io
-procedures.f90
+serpent_procedures.f90
+cobraen_procedures.f90
 )
 
 add_executable(

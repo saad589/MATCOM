@@ -1,4 +1,4 @@
-module procedures
+module cobraen_procedures
   ! implicit none
 
 contains
@@ -51,177 +51,32 @@ contains
     end subroutine linspace
 
 
-    subroutine serpent_in_handle(iteration, nodes, f_temp, c_temp, w_temp, w_dens)
-        integer, intent(in) :: iteration, nodes
-        real, dimension(:), intent(in out) :: f_temp, c_temp, w_temp, w_dens
-
-        character(len=256) :: filename
-
-        ! debug variables
-        integer :: ios ! anything other than 0 is an error
-        character(len=256) :: iom = "successful"
-
-        ! procedure interfaces
-        !interface
-        !    subroutine linspace(from, to, array)
-        !        real, intent(in) :: from, to
-        !        real, intent(out) :: array(:)
-        !        real :: range
-        !        integer :: n, i
-        !    end subroutine linspace
-        !end interface
-
-        real :: z(nodes+1) ! axial nodes
-        real :: bot=0.0, top=366.0 ! channel dimension
-
-        write(filename,"(a,i0)") "./serpent_files/serp_inp_",iteration
-        print "(2a)", "Trying to create ", trim(filename)
-        open(unit=11, file=filename, iostat=ios, iomsg=iom)
-
-
-        !
-        ! deck of cell cards
-        !
-        write(unit=11,fmt="(a)") "                                                                                 "
-        write(unit=11,fmt="(a)") "cell c99   0  outside    750                                                     "
-        write(unit=11,fmt="(a)") "cell c98   0  fill 1    -750                                                     "
-        write(unit=11,fmt="(a)") "                                                                                 "
-        do i=1,nodes
-            if (i==1) then
-                write(unit=11,fmt="(a,i0,a,i0,a,i0)") "cell c",i," 1 fill p",i," -s",i+1
-            else if (i==nodes) then
-                write(unit=11,fmt="(a,i0,a,i0,a,i0)") "cell c",i," 1 fill p",i," s",i
-            else
-                write(unit=11,fmt="(a,i0,a,i0,a,i0,a,i0)") "cell c",i," 1 fill p",i," s",i," -s",i+1
-            end if
-        end do
-        write(unit=11,fmt="(a)") "                                                                                 "
-
-        !
-        ! deck of surface cards
-        !
-        write(unit=11,fmt="(a)") "                                                                                 "
-        write(unit=11,fmt="(a)") "surf 750  cuboid -0.6300 0.6300 -0.6300 0.6300 0.0  366.0"
-
-        call linspace(from=bot, to=top, array=z)
-
-        do i=1,size(z,1)
-           write(unit=11,fmt="(a,i0,a,f11.5)") "surf s",i," pz ",z(i)
-        end do
-        write(unit=11,fmt="(a)") "                                                                                 "
-
-        !
-        ! deck of universe cards
-        !
-        write(unit=11,fmt="(a)") "                                                                                     "
-        do i=1,nodes
-            write(unit=11,fmt="(a,i0)") "pin p",i
-            write(unit=11,fmt="(a,i0,a)") "f",i," 0.4000"
-            write(unit=11,fmt="(a)") "void 0.4180"
-            write(unit=11,fmt="(a,i0,a)") "c",i," 0.4750"
-            write(unit=11,fmt="(a,i0)") "w",i
-            write(unit=11,fmt="(a)") "	 																			   "
-        end do
-
-
-        !
-        ! deck of material cards
-        !
-        write(unit=11,fmt="(a)") "                                                                                     "
-        do i=1,nodes
-            write(unit=11,fmt="(a,i0,a,f11.5)") "mat f",i," -10.5 tmp ",f_temp(i)
-            write(unit=11,fmt="(a)") "92235.70c -0.79230402"
-            write(unit=11,fmt="(a)") "92238.70c -0.08803378"
-            write(unit=11,fmt="(a)") "8016.70c -0.11966221"
-            write(unit=11,fmt="(a,i0,a,f11.5)") "mat c",i," -6.55 tmp ",c_temp(i)
-            write(unit=11,fmt="(a)") "40090.70c -1.0"
-            write(unit=11,fmt="(a,i0,a,f11.5,a,f11.5,a,i0)") "mat w",i," ",w_dens(i)," tmp ", &
-                w_temp(i)," moder lwtr",i," 1001"
-            write(unit=11,fmt="(a)") "1001.70c 2"
-            write(unit=11,fmt="(a)") "8016.70c 1"
-            write(unit=11,fmt="(a,i0,a,f11.5,a)") "therm lwtr",i," ",w_temp(i)," lwtr.15t lwtr.17t"
-            write(unit=11,fmt="(a)") "																				   "
-        end do
-
-        !
-        ! deck of control cards
-        !
-        write(unit=11,fmt="(a)") "                                                                                 "
-        write(unit=11,fmt="(a)") "set pop    100000 300 100                                                        "
-        write(unit=11,fmt="(a)") "set bc     2 2 1                                                                 "
-        write(unit=11,fmt="(a)") "set acelib   ""/mnt/b/XSdata_endfb70/sss_endfb70.xsdata""                        "
-        write(unit=11,fmt="(a)") "                                                                                 "
-        write(unit=11,fmt="(a)") "plot 1 126 36600                                                                 "
-        write(unit=11,fmt="(a)") "plot 3 1000 1000                                                                 "
-        write(unit=11,fmt="(a)") "plot 3 1000 1000 0.0 -3.15 3.15 -3.15 3.15                                       "
-        write(unit=11,fmt="(a)") "                                                                                 "
-        write(unit=11,fmt="(a)") "set power 6.5159e+04                                                             "
-        write(unit=11,fmt="(a)") "det power dr -8 void dm f1 dm f2 dm f3 dm f4 dm f5 dm f6 dm f7 dm f8 dm f9 dm f10"
-
-        close(unit=11, iostat=ios, iomsg=iom)
-
-
-    end subroutine serpent_in_handle
-
-
-    subroutine serpent_out_handle(iteration, nodes, linear_pin_power)
-        !implicit none
-        integer, intent(in) :: iteration, nodes
-        ! real, dimension(:), intent(inout) :: linear_pin_power
-        real, dimension(1:nodes), intent(in out) :: linear_pin_power
-
-        character(len=256) :: filename
-        real, dimension(:,:), allocatable :: raw
-
-        ! debug variables
-        integer :: ios ! anything other than 0 is an error
-        character(len=256) :: iom = "successful"
-
-
-        !
-        ! open Serpent output detector located at ./serpent_files/
-        ! the file is named serp_inp_<i>_det0.m where <i> is the iteration number
-        !
-        write(filename,"(a,i0,a)") "./serpent_files/serp_inp_",iteration,"_det0.m"
-        print "(2a)", "Trying to open ", trim(filename)
-        open(unit=12, file=filename, status="old", iostat=ios, iomsg=iom)
-        if(ios /= 0) then
-            write(*,*) "Error ", trim(iom)
-            stop
-        end if
-        print "(2a)", "File open ", iom
-
-        !
-        ! read the data (open the file manually to see what's actually in there)
-        !
-        read(12, *) ! advance file one record
-        read(12, *) ! advance file one record
-
-        allocate(raw(1:nodes,1:12))
-        do i=1,nodes
-            read(12, *) raw(i,:)
-        end do
-
-        print "(a)", "Reading done!"
-
-        !
-        ! close file
-        !
-        close(unit=12, iostat=ios, iomsg=iom)
-            if(ios /= 0) then
-            write(*,*) "Error ", trim(iom)
-            stop
-        end if
-        print "(2a)", "File close ", iom
-
-        !
-        ! enact the side effect
-        !
-        linear_pin_power = raw(:,11)/0.366
-
-    end subroutine serpent_out_handle
-
-
+    ! Generates COBRA-EN input file for a given linear power profile.
+    !
+    ! Inputs:
+    ! -------
+    !
+    ! interation : an integer to numerically tag the input file
+    ! nodes : the number of axial nodes
+    ! linear_pin_power : the linear power distribution corresponding to the nodes
+    !
+    ! Outputs:
+    ! -------
+    !
+    ! (No side effects)
+    !
+    ! Interface:
+    ! ---------
+    !
+    ! TBD
+    !
+    ! Example:
+    ! -------
+    ! 
+    ! integer :: i, nodes 
+    ! real :: array(:,:)
+    ! call cobra_in_handle(i, nodes, array(:,i))
+    !
     subroutine cobra_in_handle(iteration, nodes, linear_pin_power)
         !implicit none
         integer, intent(in) :: iteration, nodes
@@ -346,7 +201,33 @@ contains
 
     end subroutine cobra_in_handle
 
-
+    ! Read COBRA-EN output file and returns fuel, cladding, and water
+    ! temperature profiles. Additionally retuns water density. 
+    !
+    ! Inputs:
+    ! -------
+    !
+    ! interation : an integer to numerically tag the input file
+    ! nodes : the number of axial nodes
+    !
+    ! Outputs:
+    ! -------
+    !
+    ! fuel_temp : the fuel temperature distribution corresponding to the nodes
+    ! clad_temp : the cladding temperature distribution corresponding to the nodes
+    ! coolant_temp : the coolant temperature distribution corresponding to the nodes
+    ! coolant_density : the coolant density distribution corresponding to the nodes
+    !
+    ! Interface:
+    ! ---------
+    !
+    ! TBD
+    !
+    ! Example:
+    ! -------
+    ! 
+    ! TBD 
+    !
     subroutine cobra_out_handle (iteration, nodes, &
         fuel_temp, clad_temp, coolant_temp, coolant_density)
         ! implicit none
@@ -358,8 +239,7 @@ contains
         integer :: steps
 
         character(len=256) :: line
-        character(len=:), allocatable :: dummy_line_1, dummy_line_2
-
+        character(len=:), allocatable :: search_string_1, search_string_2
 
         ! debug variables
         integer :: ios ! anything other than 0 is an error
@@ -377,15 +257,17 @@ contains
         open(unit=14, file=filename, status="old", iostat=ios, iomsg=iom)
 
         steps = nodes
-        dummy_line_1 = "ASSEMBLY AVERAGED RESULTS"
-        dummy_line_2 = "T( 7)"
+        search_string_1 = "ASSEMBLY AVERAGED RESULTS"
+        search_string_2 = "T( 7)"
 
 
         do ! until out of words
             read (unit=14, fmt="(a)", iostat=ios) line
 
-            if (index(line,dummy_line_1) /= 0) then
+            if (index(line,search_string_1) /= 0) then
+				print *
                 print "(a)", "Match found!!!!"
+				print *
 
                 ! skip 4 records
                 read (unit=14, fmt="(a)", iostat=ios)
@@ -393,7 +275,7 @@ contains
                 read (unit=14, fmt="(a)", iostat=ios)
                 read (unit=14, fmt="(a)", iostat=ios)
 
-                allocate(raw(1:nodes+1,1:10))
+                allocate(raw(1:nodes+1,1:10)) ! no edge points -> no of nodes + 1 
                 do i=1,nodes+1
                     read(14, *) raw(i,:)
                 end do
@@ -421,15 +303,16 @@ contains
                 print *
                 print "(a)", "Coolant mean density: "
                 ! calculate the mean node value by averaging the edge values
-                coolant_density = 0.5*(raw(1:nodes,5)+raw(2:nodes+1,5))
+                coolant_density = -1.0E-3*0.5*(raw(1:nodes,5)+raw(2:nodes+1,5))
                 print "(f11.5)",coolant_density
 
             end if
 
-
-            if (index(line,dummy_line_2) /= 0) then
+            if (index(line,search_string_2) /= 0) then
+				print *
                 print "(a)", "Match found!!!!"
-
+				print * 
+				
                 ! skip 1 record
                 read (unit=14, fmt="(a)", iostat=ios)
 
@@ -457,7 +340,6 @@ contains
 
             end if
 
-
             if (ios < 0) exit ! End of file
             print *, trim(line)
         end do
@@ -465,47 +347,8 @@ contains
         ! read(14, "(a)") line
         ! print "(a)", line
 
-
-
         close(unit=14)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     end subroutine cobra_out_handle
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-end module
+end module cobraen_procedures

@@ -2,7 +2,8 @@ program main
 ! This is the head file of the coupling interface
 ! Written by SAAD ISLAM on 08 MAR 2022
 
-use procedures
+use serpent_procedures
+use cobraen_procedures
 
 ! implicit none
 integer, parameter :: nodes = 10
@@ -37,8 +38,7 @@ print *
 !
 inquire (file="serpent_files", exist=ex)
 ! print *, ex
-
-if (.not.ex) then ! if not exists
+if (.not.ex) then ! if does not exist
     call execute_command_line("mkdir serpent_files")
     print "(a)", "Serpent dir cleated successfully "
 else
@@ -50,48 +50,49 @@ end if
 !
 inquire (file="cobra_files", exist=ex)
 ! print *, ex
-
-if (.not.ex) then ! if not exists
+if (.not.ex) then ! if does not exist
     call execute_command_line("mkdir cobra_files")
     print "(a)", "COBRA-EN dir cleated successfully "
 else
     print "(a)", "COBRA-EN dir exists"
 end if
 
-
+! Initial temperate and density distribution
 fuel_temp_dist(:,1) = 900.0 ! fuel temperature (K) at nodes
 clad_temp_dist(:,1) = 600.0 ! cladding temperature (K) at nodes
 coolant_temp_dist(:,1) = 600.0 ! water temperature (K) at nodes
 coolant_density_dist(:,1) = -0.6 ! water density (gm/cm3) at nodes as a function of node temperature
 
 do i=1,iteration
-    print "(a)", "iteration no: ", i
+    
+	! Print the current iteration number
+	print *
+    print "(a,i0)", "iteration no: ", i
+    print *
 
-    ! generate Serpent input file
-    call serpent_in_handle(i, nodes, fuel_temp_dist(:,1), clad_temp_dist(:,1), &
-        coolant_temp_dist(:,1), coolant_density_dist(:,1))
+    ! Generate Serpent input file
+    call serpent_in_handle(i, nodes, fuel_temp_dist(:,i), clad_temp_dist(:,i), &
+        coolant_temp_dist(:,i), coolant_density_dist(:,i))
 
-    ! run Serpent
-    ! write(cmd,"(a,i0,a)") "sss2 ./serpent_files/serp_inp_",i," -omp 8"
-    write(cmd,"(a)") "pwd"
+    ! Run Serpent
+    write(cmd,"(a,i0,a)") "sss2 ./serpent_files/serp_inp_",i," -omp 8"
     print "(a)", cmd
     call execute_command_line(cmd)
 
-    ! read Serpent output
+    ! Read Serpent output
     call serpent_out_handle(i, nodes, linear_pin_power_dist(:,i))
 
     ! generate COBRA-EN input
     call cobra_in_handle(i, nodes, linear_pin_power_dist(:,i))
 
-    ! run COBRA-EN
-    ! write(cmd,"(a)") "./cobraen"
-    write(cmd,"(a)") "pwd"
+    ! Run COBRA-EN
+    write(cmd,"(a)") "./cobraen"
     print "(a)", cmd
     call execute_command_line(cmd)
 
-    ! read COBRA-EN output
-    call cobra_out_handle (iteration, nodes, fuel_temp_dist(:,2), &
-        clad_temp_dist(:,2), coolant_temp_dist(:,2), coolant_density_dist(:,2))
+    ! Read COBRA-EN output
+    call cobra_out_handle(i, nodes, fuel_temp_dist(:,i+1), &
+        clad_temp_dist(:,i+1), coolant_temp_dist(:,i+1), coolant_density_dist(:,i+1))
 
 end do
 
