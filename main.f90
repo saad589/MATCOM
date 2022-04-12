@@ -1,4 +1,4 @@
-program master
+program main
 ! This is the head file of the coupling interface
 ! Written by SAAD ISLAM on 08 MAR 2022
 
@@ -65,14 +65,34 @@ coolant_temp_dist(:,1) = 600.0 ! water temperature (K) at nodes
 coolant_density_dist(:,1) = -0.6 ! water density (gm/cm3) at nodes as a function of node temperature
 
 do i=1,iteration
-    write(cmd,"(a,i0,a)") "sss2 ./serpent_files/serp_inp_",i," -omp 8"
-    ! write(cmd,"(a)") "pwd"
-    print "(a)", cmd
-    call execute_command_line(cmd)
-    print *, "iteration no: ", i
+    print "(a)", "iteration no: ", i
+
+    ! generate Serpent input file
     call serpent_in_handle(i, nodes, fuel_temp_dist(:,1), clad_temp_dist(:,1), &
         coolant_temp_dist(:,1), coolant_density_dist(:,1))
+
+    ! run Serpent
+    ! write(cmd,"(a,i0,a)") "sss2 ./serpent_files/serp_inp_",i," -omp 8"
+    write(cmd,"(a)") "pwd"
+    print "(a)", cmd
+    call execute_command_line(cmd)
+
+    ! read Serpent output
     call serpent_out_handle(i, nodes, linear_pin_power_dist(:,i))
+
+    ! generate COBRA-EN input
+    call cobra_in_handle(i, nodes, linear_pin_power_dist(:,i))
+
+    ! run COBRA-EN
+    ! write(cmd,"(a)") "./cobraen"
+    write(cmd,"(a)") "pwd"
+    print "(a)", cmd
+    call execute_command_line(cmd)
+
+    ! read COBRA-EN output
+    call cobra_out_handle (iteration, nodes, fuel_temp_dist(:,2), &
+        clad_temp_dist(:,2), coolant_temp_dist(:,2), coolant_density_dist(:,2))
+
 end do
 
 print *, size(linear_pin_power_dist,1), size(linear_pin_power_dist,2)
@@ -85,4 +105,4 @@ print "(f11.5)", linear_pin_power_dist(:,3)
 
 
 
-end program master
+end program main
