@@ -1,0 +1,6 @@
+# This is a commit 
+Build/
+
+# Ignore all hidden files (except gitignore)
+.*
+!/.gitignore
