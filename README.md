@@ -65,4 +65,4 @@ MATCOM follows the [Contributor Covenant](http://contributor-covenant.org/versio
 
 ## License
 
-[GNU GPL](LICENSE) © Saad Islam
+[GPL](LICENSE) © Saad Islam
