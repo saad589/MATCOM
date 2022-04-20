@@ -4,13 +4,19 @@ program main
 
 use serpent_procedures
 use cobraen_procedures
+use results
 
 ! implicit none
-integer, parameter :: nodes = 10
-integer, parameter :: iteration = 5
-real, dimension(nodes,iteration) :: linear_pin_power_dist ! Serpent output
-real, dimension(nodes,iteration+1) :: fuel_temp_dist, clad_temp_dist, &
+! integer, parameter :: nodes = 10
+! integer, parameter :: iteration = 5
+! real, dimension(nodes,iteration) :: linear_pin_power_dist ! Serpent output
+! real, dimension(nodes,iteration+1) :: fuel_temp_dist, clad_temp_dist, &
+! 	coolant_temp_dist, coolant_density_dist
+	
+integer :: nodes, iteration
+real, dimension(:,:), allocatable :: linear_pin_power_dist, fuel_temp_dist, clad_temp_dist, &
 	coolant_temp_dist, coolant_density_dist
+
 logical :: ex ! existence
 character(len=256) :: cmd
 
@@ -32,6 +38,22 @@ print "(a)", "MATCOM is an external neutonics/TH coupling interface"
 print "(a)", "developed by SAAD ISLAM AMEI"
 print *
 print *
+
+!
+! Read the configuration file 
+!
+open(unit=50, file="matcom.conf")
+print *, iom
+read(50, *) nodes
+read(50, *) iteration
+read(50, *) ! skip
+close(unit=50)
+
+allocate(linear_pin_power_dist(nodes,iteration))
+allocate(fuel_temp_dist(nodes,iteration+1))
+allocate(clad_temp_dist(nodes,iteration+1))
+allocate(coolant_temp_dist(nodes,iteration+1))
+allocate(coolant_density_dist(nodes,iteration+1))
 
 !
 ! Create Serpent directory to store I/O files
@@ -96,14 +118,14 @@ do i=1,iteration
 
 end do
 
-print *, size(linear_pin_power_dist,1), size(linear_pin_power_dist,2)
+! print *, size(linear_pin_power_dist,1), size(linear_pin_power_dist,2)
+! print "(f11.5)", linear_pin_power_dist(:,3)
 
-print "(f11.5)", linear_pin_power_dist(:,3)
-
-
-
-
-
+!
+! Export results 
+!
+call print_result_matlab(iteration, nodes, linear_pin_power_dist, &
+        fuel_temp_dist, clad_temp_dist, coolant_temp_dist, coolant_density_dist)
 
 
 end program main

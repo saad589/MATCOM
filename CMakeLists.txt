@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
 
-
-
-
 project(Coupling_project VERSION 1.0.0)
 
 # CONFIGURE FORTRAN COMPILER
@@ -27,6 +24,7 @@ add_library(
 io
 serpent_procedures.f90
 cobraen_procedures.f90
+results.f90
 )
 
 add_executable(

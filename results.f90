@@ -73,7 +73,7 @@ contains
 
 
 
-        write(filename,"(a)") "matcom_result.m"
+        write(filename,"(a)") "matcom_res.m"
         print "(2a)", "Writing results to ", trim(filename)
         open(unit=69, file=filename, iostat=ios, iomsg=iom)
 

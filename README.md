@@ -12,9 +12,9 @@ This repository contains:
 
 1. Fortran source files.
 2. A CMake profile. 
-3. Readme and licence declaration.
+3. Readme and license declaration.
 
-Both Serpent and COBRA-EN are distribution controlled nuclear codes and must be obtained though OECD/NEA or RSICC (or similar entities).  
+Both Serpent and COBRA-EN are distribution-controlled nuclear codes and must be obtained through OECD/NEA or RSICC (or similar entities).  
 
 ## Adapting this Repository
 
@@ -40,16 +40,23 @@ After generating the makefiles, compile MATCOM using the following command:
 $ make -C Build 
 ```
 
-This will build the libraries and the executable called "matcom" inside the Build directory. Additionally, as bash script is provided to automate the build process (deprecated). 
+This will build the libraries and the executable called ``matcom`` inside the Build directory. Additionally, a bash script is provided to automate the build process (deprecated). 
 
 ## Usage
 
-Serpent sould be present in the cluster as symlink. The executable of COBRA-EN should be placed on the same directory as with the executable of MATCOM or the directory where MATCOM is invoked. Run MATCOM by simply typing:  
+Serpent should be present in the cluster as a symlink. The executable of COBRA-EN should be placed in the same directory as the executable of MATCOM or the directory where MATCOM is invoked. Additionally, a configuration file called ``matcom.conf`` must be present. The configuration file should have three lines:
+
+1. The number of nodes.
+2. The number of iterations (MATCOM doesn't have a convergence routine yet).
+3. The absolute path of the neutron cross-sections files. 
+
+
+Run MATCOM by simply typing:  
 
 ```sh
 $ matcom 
 ```
-MATCOM will create new directories and accumulate results of the iterative calculation. 
+MATCOM will create new directories and accumulate the results of the iterative calculation. The result is given in the ``matcom_res.m`` file. This file can be read with MATLAB/OCTAVE. 
 
 
 ## Maintainers

@@ -87,6 +87,8 @@ contains
         integer :: ios ! anything other than 0 is an error
         character(len=256) :: iom = "successful"
 
+		character(len=256) :: dummy_str
+
         ! procedure interfaces
         !interface
         !    subroutine linspace(from, to, array)
@@ -100,12 +102,30 @@ contains
         real :: z(nodes+1) ! axial nodes
         real :: bot=0.0, top=366.0 ! channel dimension
 
+
+
+
+
+
+		!
+		! Read the configuration file 
+		!
+		open(unit=50, file="matcom.conf", status="old", iostat=ios, iomsg=iom)
+		print *, iom
+		read(50, *) ! advance file one record
+		read(50, *) ! advance file one record
+		read(50, "(a)") dummy_str ! read the xs libradry path
+        close(unit=50, iostat=ios, iomsg=iom)
+
+
+
+
+
         write(filename,"(a,i0)") "./serpent_files/serp_inp_",iteration
         print "(2a)", "Trying to create ", trim(filename)
         open(unit=11, file=filename, iostat=ios, iomsg=iom)
-
-
-        !
+ 
+ !
         ! deck of cell cards
         !
         write(unit=11,fmt="(a)") "                                                                                 "
@@ -173,17 +193,27 @@ contains
         ! deck of control cards
         !
         write(unit=11,fmt="(a)") "                                                                                 "
-        write(unit=11,fmt="(a)") "set pop    10000 300 50                                                        "
+        write(unit=11,fmt="(a)") "set seed 1650420514512                                                           "
+        write(unit=11,fmt="(a)") "set pop    100000 500 300                                                          "
         write(unit=11,fmt="(a)") "set bc     2 2 1                                                                 "
-        write(unit=11,fmt="(a)") "set acelib   ""/mnt/b/XSdata_endfb70/sss_endfb70.xsdata""                        "
+        ! write(unit=11,fmt="(a)") "set acelib   ""/mnt/b/XSdata_endfb70/sss_endfb70.xsdata""                        "
+        write(unit=11,fmt="(3a)") "set acelib   """,trim(dummy_str),""""
+
         write(unit=11,fmt="(a)") "                                                                                 "
         write(unit=11,fmt="(a)") "plot 1 126 36600                                                                 "
         write(unit=11,fmt="(a)") "plot 3 1000 1000                                                                 "
         write(unit=11,fmt="(a)") "plot 3 1000 1000 0.0 -3.15 3.15 -3.15 3.15                                       "
         write(unit=11,fmt="(a)") "                                                                                 "
         write(unit=11,fmt="(a)") "set power 6.5159e+04                                                             "
-        write(unit=11,fmt="(a)") "det power dr -8 void dm f1 dm f2 dm f3 dm f4 dm f5 dm f6 dm f7 dm f8 dm f9 dm f10"
+        ! write(unit=11,fmt="(a)") "det power dr -8 void dm f1 dm f2 dm f3 dm f4 dm f5 dm f6 dm f7 dm f8 dm f9 dm f10"
 
+		write(dummy_str, "(a)") "det power dr -8 void "
+		do i = 1,nodes
+			write(dummy_str, "(2a,i0)") trim(dummy_str), " dm f", i
+		end do
+		write(unit=11,fmt="(a)") trim(dummy_str)
+		
+		
         close(unit=11, iostat=ios, iomsg=iom)
 
 
